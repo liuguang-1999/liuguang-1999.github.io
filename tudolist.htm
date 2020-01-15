@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>ToDoList—最简单的待办事项列表</title>
+    <link rel="stylesheet" href="./12-todolist/css/index.css">
+    <script src="jquery.min.js"></script>
+    <!-- <script src="js/todolist.js"></script> -->
+</head>
+
+<body>
+    <header>
+        <section>
+            <label for="title">ToDoList</label>
+            <input type="text" id="title" name="title" placeholder="添加ToDo" required="required" autocomplete="off" />
+        </section>
+    </header>
+    <section>
+        <h2>正在进行 <span id="todocount"></span></h2>
+        <ol id="todolist" class="demo-box">
+
+        </ol>
+        <h2>已经完成 <span id="donecount"></span></h2>
+        <ul id="donelist">
+
+        </ul>
+    </section>
+    <footer>
+        Copyright &copy; 2014 todolist.cn
+    </footer>
+</body>
+<script>
+
+    laod(); //全局渲染 调用
+    lente(); //全局 显示 ul，ol 长度
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 第一步 按回车获取 页面数据
+    $("#title").on("keydown", function (e) {
+        if (e.keyCode == 13) {
+            if ($(this).val() === "") {
+                alert("请输入内容 内容不能为空")
+            } else {
+                // 读取 服务器数据
+                var local = getDate();
+                // 把读取过来的数据 进行更新 把最新的数据给数组local
+                local.push({ title: $(this).val(), done: false });
+                // 发送存储请求
+                saveDate(local);
+                // 本地渲染 加载到页面当中去
+                laod();
+                lente();
+                $(this).val("");
+            }
+        }
+    });
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 第五步 删除操作 
+    // ~~~~~ 给ol注册点击事件 利用 冒泡 冒到a标签上面
+    $("ol,ul").on("click", "a", function () {
+
+        // 先获取本地存储  再进行删除
+        var data = getDate();
+
+        // 再进行数据修改  给要点击的a标签 设置一个标识 点击后 找到表示 删除li
+        var i = $(this).attr("id");
+
+        data.splice(i, 1);  //删除操做  删除i是第几个a 后面的1是 删除一个 
+        // 数据保存到本地
+        saveDate(data);   // 删除步骤 结束后  把 数据从新存储 到 服务器里面
+
+        // 重新渲染加载。  // 以上步骤 做完后 需要从新渲染一下页面 把内容加载出来
+        laod();
+        lente();
+    });
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 第六步 改变复选框 状态
+    $("ol,ul").on("click", "input", function () {
+
+        // 向服务器获取数据 3.1
+        var data = getDate();
+        // 获取 当前复选框的 索引 找出我点击的是第几个 复选框3.2
+        var i = $(this).siblings("a").attr("id");
+        //  data 这个数组 里面 修改第几条  然后修改什么属性3.3
+        data[i].done = $(this).prop("checked");
+        //  修改完属性后 向服务器 发起存储请求
+        saveDate(data);
+        // 存储后  把里面的数据 拿出来 进行渲染
+        laod();
+        lente();
+    })
+
+
+
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  以下内容是 封装的方法 
+
+    //  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  第三步 向服务器 提交(获取) 请求
+    function getDate() {
+        var data = localStorage.getItem("todolist");
+        if (data != null) {
+            return JSON.parse(data);
+        } else {
+            return [];
+        }
+    };
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  第二步 向服务器 提交(存储) 请求
+
+    function saveDate(data) {
+        localStorage.setItem("todolist", JSON.stringify(data));  //key 键值对的名字 todolist  date是键值对的 值从local传来的
+    };
+
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  第四步 在浏览器页面 (渲染加载) 数据
+    function laod() {
+        var data = getDate();
+        $("ol,ul").empty();
+        $.each(data, function (i, n) {
+            //  3.4 判断 一下 复选框的状态 选中了就渲染到 ul里面  没选中就渲染到ol里面 
+            if (n.done) {
+                $("ul").prepend(`<li><input type="checkbox" checked="checked"> <p>${n.title}</p> <a href="javascript:"; id = ${i}></a></li>`)
+            } else {
+                $("ol").prepend(`<li><input type="checkbox"> <p>${n.title}</p> <a href="javascript:"; id = ${i}></a></li>`)
+            }
+            $("#todocount").text($("#todolist li").length);
+            $("#donecount").text($("#donelist li").length);
+        })
+    };
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  显示 两个数组的 长度
+    function lente() {
+        $("#todocount").text($("#todolist li").length);
+        $("#donecount").text($("#donelist li").length);
+    }
+</script>
+
+</html>
